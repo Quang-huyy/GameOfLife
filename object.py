@@ -1,10 +1,15 @@
 class Object:
-    def __init__(self, index, x, y):
-        self.index = index
+    _id_counter = 0 
+    def __init__(self, x, y):
+        self.index = Object._id_counter
+        Object._id_counter+=1
         self.x = x
         self.y = y
 
 class Grass(Object):
-    def __init__(self, index, x, y):
-        super().__init__(index, x, y)
-        print(f'Grass {index} spawned at coordinate: {x,y}')
+    _id_counter = 0 
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.index = Grass._id_counter
+        Grass._id_counter+=1
+        print(f'Grass {self.index} spawned at coordinate: {x,y}')
