@@ -66,14 +66,14 @@ class MapData:
         return self.map
     
     def createMap(self):
-        from animal import Rabbit, Fox 
+        from animal import Rabbit, Fox
         pygame.init()
         self.display = pygame.display.set_mode((self.tileSize * self.mapWidth, self.tileSize * self.mapHeight))
         self.background = pygame.Surface((self.tileSize * self.mapWidth, self.tileSize * self.mapHeight))
         self.animal_layer = pygame.Surface((self.tileSize * self.mapWidth, self.tileSize * self.mapHeight), pygame.SRCALPHA)
         self.animal_layer.fill((0, 0, 0, 0))  # Fill with transparent black
-        self.food_layer = pygame.Surface((self.tileSize * self.mapWidth, self.tileSize * self.mapHeight), pygame.SRCALPHA)
-        self.food_layer.fill((0, 0, 0, 0))  # Fill with transparent black
+        self.grass_layer = pygame.Surface((self.tileSize * self.mapWidth, self.tileSize * self.mapHeight), pygame.SRCALPHA)
+        self.grass_layer.fill((0, 0, 0, 0))  # Fill with transparent black
         
         # create background
         self.display.fill((0, 0, 0))  # Clear screen with black or any color
@@ -82,14 +82,11 @@ class MapData:
         self.event.set()
 
         #spawnInitialFood
-        self.spawnFood(number = 10)
+        self.createGrass(10)
 
         #spawnAnimals
         self.createAnimal(10,"rabbit")
-        self.createAnimal(5,"fox")
-
-        listAnimals = Rabbit.getListRabbit() + Fox.getFoxList()
-        self.spawnAnimal(listAnimals)
+        self.createAnimal(2,"fox")
 
         while True:
             for event in pygame.event.get():
@@ -99,17 +96,18 @@ class MapData:
             # Clear the display
             self.display.fill((0, 0, 0))  # Clear screen with black or any color
             self.display.blit(self.background, (0, 0))  # Draw the background
-            self.createFood()
-            # Clear and redraw food and animal layer
-            self.food_layer.fill((0, 0, 0, 0))  # Clear animal layer
+            self.createGrass()
+
+            # Clear and redraw grass and animal layer
+            self.grass_layer.fill((0, 0, 0, 0))  # Clear grass layer
             self.animal_layer.fill((0, 0, 0, 0))  # Clear animal layer
-            listAnimals = Rabbit.getListRabbit() + Fox.getFoxList()
+            listAnimals = Rabbit.getListRabbit() + Fox.getListFox()
             self.spawnAnimal(listAnimals)  # Update animal positions on the screen
             listGrass = Grass.getgrassList()
-            self.spawnFood(listGrass)    #update grass list
+            self.spawnGrass(listGrass)    #update grass list
 
-            # Update food layer
-            self.display.blit(self.food_layer, (0, 0))  # Draw the food layer
+            # Update grass layer
+            self.display.blit(self.grass_layer, (0, 0))  # Draw the food layer
             self.display.blit(self.animal_layer, (0, 0))  # Draw the animal layer
             
             pygame.display.update()
@@ -125,38 +123,26 @@ class MapData:
         from animal import Rabbit, Fox   
         for animal in list:
             # Calculate the position
-            pos = (animal.x * self.tileSize + self.tileSize // 2,
-                   animal.y * self.tileSize + self.tileSize // 2)
+            pos = (animal.coord[0] * self.tileSize + self.tileSize // 2,
+                   animal.coord[1] * self.tileSize + self.tileSize // 2)
             if isinstance(animal, Rabbit):
                 pygame.draw.circle(self.animal_layer, RABBITBROWN, pos, 8)
             elif isinstance(animal, Fox):
-                pygame.draw.circle(self.animal_layer, FOXRED, pos, 10)  # Foxes could be bigger, for example
+                pygame.draw.circle(self.animal_layer, FOXRED, pos, 10)  
 
-    def spawnFood(self, number=None):
-        if isinstance(number, list):
-            for grass in number:
+    def spawnGrass(self, list):
+            for grass in list:
                 # Calculate the position
-                pos = (grass.x * self.tileSize + self.tileSize // 2,
-                        grass.y * self.tileSize + self.tileSize // 2)
-                pygame.draw.circle(self.food_layer, GRASSGREEN, pos, 5)
+                pos = (grass.coord[0] * self.tileSize + self.tileSize // 2,
+                        grass.coord[1] * self.tileSize + self.tileSize // 2)
+                pygame.draw.circle(self.grass_layer, GRASSGREEN, pos, 5)
 
-        elif isinstance(number, int):
-            for _ in range(number):
-                new_grass = self.createFood()
-                self.drawFood(new_grass)
-                
-
-    def drawFood(self, food):
-        pos = (food.x * self.tileSize + self.tileSize // 2,
-                    food.y * self.tileSize + self.tileSize // 2)
-        pygame.draw.circle(self.food_layer, GRASSGREEN, pos, 5)
-
-    def createFood(self):
-        x, y = np.random.randint(0, self.mapHeight), np.random.randint(0, self.mapWidth)
-        while self.map[x][y] != S or self.map[x][y] != G:
+    def createGrass(self, num = 1):
+        for _ in range(num):
             x, y = np.random.randint(0, self.mapHeight), np.random.randint(0, self.mapWidth)
+                # while self.map[x][y] != S or self.map[x][y] != G:
+                #     x, y = np.random.randint(0, self.mapHeight), np.random.randint(0, self.mapWidth)
             grass = Grass(x, y)
-            return grass
             
 
     def createAnimal(self, numberAnimal, typeAnimal):

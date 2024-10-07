@@ -4,67 +4,81 @@ import math, time, threading
 
 class Animal:
     _id_counter = 0
+    listAnimal = []
+
     def __init__(self, x, y):
         self.index = Animal._id_counter
         Animal._id_counter+=1
-        self.x = x
-        self.y = y
+        self.coord = [x,y]
+        self.__class__.listAnimal.append(self)
+        self.stop = False
 
+    @classmethod
+    def getListAnimal(cls):
+        return cls.listAnimal
+    
     def probingFood(self, foodList, foodType):
         self.minDistance = 9999
         self.nearestFood = None
         foodIndex = None
 
-        for index, food in enumerate(foodList):
+        for food in foodList:
             # Check if the food is at the same coordinate
-            if food.x == self.x and food.y == self.y:
+            if food.coord[0] == self.coord[0] and food.coord[1] == self.coord[1]:
                 self.minDistance = 0
                 self.nearestFood = food
-                foodIndex = index
+                foodIndex = foodList.index(food)
                 break
             else:
-                distance = math.sqrt((self.x - food.x) ** 2 + (self.y - food.y) ** 2)
+                distance = math.sqrt((self.coord[0] - food.coord[0]) ** 2 + (self.coord[1] - food.coord[1]) ** 2)
                 if distance < self.minDistance:
                     self.minDistance = distance
                     self.nearestFood = food
-                    foodIndex = index
-
-        print(f'{self.__class__.__name__} {self.index}: the closest {foodType} is at coord :{self.nearestFood.x, self.nearestFood.y}')
+                    foodIndex = foodList.index(food)
         return foodIndex
 
-    def move(self, axe, nearestFood):
-        if axe == True:
-            if self.x < nearestFood.x:
-                self.x += 1
-            elif self.x > nearestFood.x:
-                self.x -= 1
-        elif axe == False:
-            if self.y < nearestFood.y:
-                self.y += 1
-            elif self.y > nearestFood.y:
-                self.y -= 1
+    def checkValidMove(self):
+        for animal in self.listAnimal:
+            if animal is not self:
+                if isinstance(animal, self.__class__):
+                    if self.coord == animal.coord:
+                        return False
+        return True
+
+    def move(self, nearestFood):
+        oldCoord = self.coord[:]    
+        if self.coord[0] < nearestFood.coord[0]:
+            self.coord[0] += 1
+        elif self.coord[0] > nearestFood.coord[0]:
+            self.coord[0] -= 1
+        if self.coord[1] < nearestFood.coord[1]:
+            self.coord[1] += 1
+        elif self.coord[1] > nearestFood.coord[1]:
+            self.coord[1] -= 1
+        if not self.checkValidMove():
+            self.coord = oldCoord
 
     def gotoFood(self, nearestFood):
         if nearestFood is not None:
-            if self.x != nearestFood.x:
-                self.move(True, nearestFood)             #True to indicate axe X
-            elif self.y != nearestFood.y:
-                self.move(False, nearestFood)   
-            print(f'{self.__class__.__name__} {self.index} now at coordinate: {self.x,self.y}')
+            if self.coord[0] != nearestFood.coord[0] or self.coord[1] != nearestFood.coord[1]:
+                self.move(nearestFood)
+            print(f'{self.__class__.__name__} {self.index} now at coordinate: {self.coord[0],self.coord[1]}')
 
     def updateFoodMap(self, foodIndex, listFood):
         if foodIndex is not None:
             listFood.pop(foodIndex)
+            listFood[foodIndex].stop = True
         else:
             print(f'{self.__class__.__name__} {self.index}: No valid food index to update.')
 
-    def run(self, foodList):
-        while True:
-            foodIndex = self.probingFood(foodList, Grass.__name__)
+    def run(self, foodList, foodType):
+        while not self.stop:
+            foodIndex = self.probingFood(foodList, foodType)
             self.gotoFood(self.nearestFood)
-            if self.x == self.nearestFood.x and self.y == self.nearestFood.y:
+            if self.coord[0] == self.nearestFood.coord[0] and self.coord[1] == self.nearestFood.coord[1]:
                 self.updateFoodMap(foodIndex, foodList)
             time.sleep(1)
+        self.stop_event.set()
 
 class Rabbit(Animal):
     _id_counter = 0
@@ -74,8 +88,8 @@ class Rabbit(Animal):
         self.__class__.listRabbit.append(self)
         self.index = Rabbit._id_counter
         Rabbit._id_counter+=1
-        print(f'{self.__class__.__name__} {self.index} spawned at coordinate: {self.x,self.y}')
-        threading.Thread(target=self.run, args=(Grass.getgrassList(),), daemon=True).start()
+        print(f'{self.__class__.__name__} {self.index} spawned at coordinate: {self.coord[0],self.coord[1]}')
+        threading.Thread(target=self.run, args=(Grass.getgrassList(),Grass.__name__), daemon=True).start()
             
     @classmethod
     def getListRabbit(cls):
@@ -90,8 +104,8 @@ class Fox(Animal):
         self.index = Fox._id_counter
         Fox._id_counter+=1
         print(f'{self.__class__.__name__} {self.index} spawned at coordinate: {x,y}')
-        threading.Thread(target=self.run, args=(Rabbit.getListRabbit(),), daemon=True).start()
+        threading.Thread(target=self.run, args=(Rabbit.getListRabbit(),Rabbit.__name__), daemon=True).start()
 
     @classmethod
-    def getFoxList(cls):
+    def getListFox(cls):
         return cls.listFox

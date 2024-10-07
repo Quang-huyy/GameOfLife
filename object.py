@@ -3,8 +3,7 @@ class Object:
     def __init__(self, x, y):
         self.index = Object._id_counter
         Object._id_counter+=1
-        self.x = x
-        self.y = y
+        self.coord = [x,y]
 
 class Grass(Object):
     _id_counter = 0 
